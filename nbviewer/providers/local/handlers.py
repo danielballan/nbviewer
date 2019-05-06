@@ -91,6 +91,17 @@ class LocalFileHandler(RenderingHandler):
             except iostream.StreamClosedError:
                 return
 
+    @gen.coroutine
+    def copy_to_user_server(self, fullpath):
+        """Download the file at the given absolute path.
+
+        Parameters
+        ==========
+        fullpath: str
+            Absolute path to the file
+        """
+        self.redirect('../../../user-redirect/clone?copy_from=%s' % fullpath)
+
     def can_show(self, path):
         """
         Generally determine whether the given path is displayable.
@@ -144,6 +155,9 @@ class LocalFileHandler(RenderingHandler):
         If the path points to an accessible notebook file, render it.
         If the path points to an accessible file and the URL contains a
         'download' query parameter, respond with the file as a download.
+        If the path points to an accessible file and the URL contains a
+        'copy' query parameter, redirect to the current user's notebook
+        server.
 
         Parameters
         ==========
@@ -162,6 +176,11 @@ class LocalFileHandler(RenderingHandler):
         is_download = self.get_query_arguments('download')
         if is_download:
             self.download(fullpath)
+            return
+
+        is_copy = self.get_query_arguments('copy')
+        if is_copy:
+            self.copy_to_user_server(fullpath)
             return
 
         try:
